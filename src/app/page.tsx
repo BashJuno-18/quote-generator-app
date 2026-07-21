@@ -48,7 +48,7 @@ export default function Home() {
   }, [getQuote]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100 p-4 dark:from-zinc-950 dark:to-zinc-900">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-xl rounded-2xl border border-zinc-200 bg-white/80 p-8 shadow-lg backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-12">
         {loading ? (
           <div className="flex items-center justify-center py-16">
