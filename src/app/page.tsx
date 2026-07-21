@@ -7,6 +7,15 @@ type Quote = {
   author: string;
 };
 
+const backgrounds = [
+  "/forest-bg.jpg",
+  "/bg-1.jpg",
+  "/bg-2.jpg",
+  "/bg-3.jpg",
+  "/bg-4.jpg",
+  "/bg-5.jpg",
+];
+
 const fallbackQuotes: Quote[] = [
   { content: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
   { content: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
@@ -29,6 +38,10 @@ async function fetchQuote(): Promise<Quote> {
 export default function Home() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [loading, setLoading] = useState(false);
+  const [currentBg, setCurrentBg] = useState(0);
+  const [nextBg, setNextBg] = useState<number | null>(null);
+  const [transitioning, setTransitioning] = useState(false);
+  const [fadeIn, setFadeIn] = useState(false);
 
   const getQuote = useCallback(async () => {
     setLoading(true);
@@ -42,39 +55,81 @@ export default function Home() {
     }
   }, []);
 
+  const handleNewQuote = useCallback(() => {
+    if (transitioning || nextBg !== null) return;
+    getQuote();
+
+    let newIdx;
+    do {
+      newIdx = Math.floor(Math.random() * backgrounds.length);
+    } while (newIdx === currentBg);
+
+    setNextBg(newIdx);
+    requestAnimationFrame(() => {
+      setTransitioning(true);
+      setFadeIn(true);
+    });
+    setTimeout(() => {
+      setCurrentBg(newIdx);
+      setNextBg(null);
+      setTransitioning(false);
+      setFadeIn(false);
+    }, 700);
+  }, [getQuote, transitioning, nextBg, currentBg]);
+
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     getQuote();
   }, [getQuote]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-xl rounded-2xl border border-zinc-200 bg-white/80 p-8 shadow-lg backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-12">
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
-          </div>
-        ) : quote ? (
-          <div className="space-y-6">
-            <p className="text-center text-xl leading-relaxed text-zinc-800 dark:text-zinc-200 sm:text-2xl">
-              &ldquo;{quote.content}&rdquo;
-            </p>
-            <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-              &mdash; {quote.author}
-            </p>
-          </div>
-        ) : null}
+    <>
+      <div className="fixed inset-0 -z-10">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700"
+          style={{
+            backgroundImage: `url(${backgrounds[currentBg]})`,
+            opacity: transitioning ? 0 : 1,
+          }}
+        />
+        {nextBg !== null && (
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700"
+            style={{
+              backgroundImage: `url(${backgrounds[nextBg]})`,
+              opacity: fadeIn ? 1 : 0,
+            }}
+          />
+        )}
+        <div className="absolute inset-0 bg-black/40" />
+      </div>
+      <div className="flex min-h-screen flex-col items-center justify-center p-4">
+        <div className="w-full max-w-xl rounded-2xl border border-zinc-200 bg-white/80 p-8 shadow-lg backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-12">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
+            </div>
+          ) : quote ? (
+            <div className="space-y-6">
+              <p className="text-center text-xl leading-relaxed text-zinc-800 dark:text-zinc-200 sm:text-2xl">
+                &ldquo;{quote.content}&rdquo;
+              </p>
+              <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                &mdash; {quote.author}
+              </p>
+            </div>
+          ) : null}
 
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={getQuote}
-            disabled={loading}
-            className="rounded-xl bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition-all hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-          >
-            {loading ? "Loading..." : "New Quote"}
-          </button>
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={handleNewQuote}
+              disabled={loading}
+              className="rounded-xl bg-zinc-900 px-6 py-3 text-sm font-medium text-white transition-all hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            >
+              {loading ? "Loading..." : "New Quote"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
